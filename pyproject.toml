@@ -1,0 +1,17 @@
+[project]
+name = "content-project"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "NikolaiIakovlev",email = "118279320+NikolaiIakovlev@users.noreply.github.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "django (>=4.2,<5.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
