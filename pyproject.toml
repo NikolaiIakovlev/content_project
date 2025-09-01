@@ -14,7 +14,8 @@ dependencies = [
     "celery (>=5.3,<6.0)",
     "redis (>=4.6,<5.0)",
     "flower (>=1.2,<2.0)",
-    "django-admin-sortable2 (>=2.2.8,<3.0.0)"
+    "django-admin-sortable2 (>=2.2.8,<3.0.0)",
+    "drf-spectacular (>=0.28.0,<0.29.0)"
 ]
 
 
