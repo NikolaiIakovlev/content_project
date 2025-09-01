@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: content_web
+    command: poetry run python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build: .
+    container_name: content_celery
+    command: poetry run celery -A config worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - redis
+
+  db:
+    image: postgres:15
+    container_name: content_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: content_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
