@@ -1,48 +1,36 @@
-from rest_framework import generics
+from rest_framework import viewsets, generics
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from content.models import Page
+from content.models import Page, ContentOnPage
 from .serializers import PageListSerializer, PageDetailSerializer
-from .tasks import increment_content_counters
+
+# Пагинация
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 
-class PageListView(generics.ListAPIView):
-    """
-    API для получения списка всех страниц с пагинацией.
-    Возвращает ID, заголовок и URL для детальной информации.
-    """
-    queryset = Page.objects.all().prefetch_related('contents')
+# Список страниц с пагинацией
+class PageListAPIView(generics.ListAPIView):
+    queryset = Page.objects.all().order_by("-created_at")
     serializer_class = PageListSerializer
-    #pagination_class = generics.pagination.PageNumberPagination
+    pagination_class = StandardResultsSetPagination
 
 
-class PageDetailView(generics.RetrieveAPIView):
-    """
-    API для получения детальной информации о странице.
-    Включает все привязанные объекты контента с атрибутами.
-    Запускает фоновую задачу для увеличения счетчиков просмотров.
-    """
-    queryset = Page.objects.all().prefetch_related(
-        'contents__content_object'
-    )
+# Детальная страница
+class PageDetailAPIView(generics.RetrieveAPIView):
+    queryset = Page.objects.all()
     serializer_class = PageDetailSerializer
-    lookup_field = 'pk'
-    
+
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
+
+        # увеличиваем счетчики всех контентов на странице
+        for item in instance.get_ordered_items():
+            content_obj = item.content.content_object
+            if content_obj:
+                content_obj.increment_counter()
+
         serializer = self.get_serializer(instance)
-        
-        # Собираем ID всего контента на странице
-        content_ids = []
-        content_types = []
-        
-        for page_content in instance.contents.all():
-            content_obj = page_content.content_object
-            content_ids.append(content_obj.id)
-            content_types.append(content_obj._meta.model_name)
-        
-        # Запускаем фоновую задачу для атомарного увеличения счетчиков
-        if content_ids:
-            increment_content_counters.delay(content_ids, content_types)
-        
         return Response(serializer.data)
