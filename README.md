@@ -28,7 +28,8 @@ Poetry для управления зависимостями
 
 ### Клонировать проект:
 
-git clone <repo-url>
+git clone git@github.com:NikolaiIakovlev/content_project.git
+
 cd content_project
 
 
